@@ -457,7 +457,7 @@ ${text}
     const d=await res.json();
     const parsed=JSON.parse(d.content[0].text.replace(/```json|```/g,'').trim());
     parsed.entries.forEach(e=>{
-      if(e.isNew&&!md.projects.includes(e.project)) md.projects.push(e.project);
+      if(!md.projects.includes(e.project)) md.projects.push(e.project);
       if(!md.weeks[curWeek]) md.weeks[curWeek]={_label:curWeekLabel};
       md.weeks[curWeek][e.project]={progress:e.progress,nextWeek:e.nextWeek,blocker:e.blocker};
     });
