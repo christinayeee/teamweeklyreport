@@ -7,7 +7,7 @@ exports.handler = async function(event) {
   if (!apiKey) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: '未配置 DASHSCOPE_API_KEY 环境变量' })
+      body: JSON.stringify({ error: 'DASHSCOPE_API_KEY 未配置' })
     };
   }
 
@@ -21,7 +21,7 @@ exports.handler = async function(event) {
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'qwen-turbo',  // 速度快、免费额度多；需要更高质量可换 qwen-plus
+        model: 'qwen-turbo',
         messages,
         temperature: 0.3
       })
@@ -29,9 +29,16 @@ exports.handler = async function(event) {
 
     const data = await response.json();
 
+    if (data.error) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: data.error.message || JSON.stringify(data.error) })
+      };
+    }
+
     const text = data.choices?.[0]?.message?.content ?? '';
     return {
-      statusCode: response.status,
+      statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: [{ text }] })
     };
