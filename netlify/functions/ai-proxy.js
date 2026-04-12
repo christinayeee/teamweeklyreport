@@ -1,3 +1,5 @@
+const https = require('https');
+
 exports.handler = async function(event) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
@@ -13,21 +15,33 @@ exports.handler = async function(event) {
 
   try {
     const { messages } = JSON.parse(event.body);
-
-    const response = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'qwen-turbo',
-        messages,
-        temperature: 0.3
-      })
+    const postBody = JSON.stringify({
+      model: 'qwen-turbo',
+      messages,
+      temperature: 0.3
     });
 
-    const data = await response.json();
+    const result = await new Promise((resolve, reject) => {
+      const req = https.request({
+        hostname: 'dashscope.aliyuncs.com',
+        path: '/compatible-mode/v1/chat/completions',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Length': Buffer.byteLength(postBody)
+        }
+      }, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => resolve({ status: res.statusCode, body: data }));
+      });
+      req.on('error', reject);
+      req.write(postBody);
+      req.end();
+    });
+
+    const data = JSON.parse(result.body);
 
     if (data.error) {
       return {
