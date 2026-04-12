@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>团队周报追踪器</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Microsoft YaHei',sans-serif;background:#f9f9f9;color:#383838;font-size:14px;line-height:1.5;min-height:100vh}
+.app{padding:1.5rem;max-width:940px;margin:0 auto}
+
+/* login */
+.login-wrap{display:flex;flex-direction:column;align-items:center;padding:3rem 1rem;text-align:center}
+.login-wrap h2{font-size:20px;font-weight:500;margin-bottom:6px}
+.login-wrap p{font-size:13px;color:#888;margin-bottom:1.5rem;max-width:360px}
+.member-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:1.25rem;max-width:520px}
+.mbtn{padding:7px 16px;border:1px solid #ddd;border-radius:20px;background:#fff;color:#383838;cursor:pointer;font-size:13px}
+.mbtn:hover{border-color:#EC008C;color:#EC008C}
+.mbtn.mgr-btn{border-color:#EC008C;color:#EC008C;font-weight:500}
+.or-line{font-size:12px;color:#bbb;margin:10px 0}
+.new-row{display:flex;gap:8px;max-width:300px}
+
+/* topbar */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:10px;border-bottom:1px solid #eee;background:#fff;padding:12px 1rem;border-radius:10px;margin-bottom:1rem}
+.tb-left{display:flex;align-items:center;gap:10px}
+.ava{width:30px;height:30px;border-radius:50%;background:#FBEAF0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:#EC008C;flex-shrink:0}
+.ava.mgr{background:#FFF3CD;color:#856404}
+.tb-name{font-weight:500;font-size:14px}
+.tb-sub{font-size:12px;color:#888}
+.pill{display:inline-flex;align-items:center;font-size:10px;padding:1px 7px;border-radius:8px;font-weight:500;margin-left:6px;background:#FFF3CD;color:#856404}
+
+/* tabs */
+.tabs{display:flex;background:#fff;border-radius:10px;padding:0 4px;margin-bottom:1rem;border:1px solid #eee}
+.tab{padding:10px 16px;font-size:13px;cursor:pointer;border:none;background:none;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:inherit}
+.tab.active{color:#EC008C;border-bottom-color:#EC008C;font-weight:500}
+
+/* week selector */
+.wk-row{display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding:9px 14px;background:#fff;border-radius:8px;border:1px solid #eee;flex-wrap:wrap}
+.wk-row label{font-size:12px;color:#888}
+.wk-row span{font-size:13px;font-weight:500;color:#EC008C}
+input[type=date]{border:1px solid #eee;background:#fff;color:#383838;padding:5px 9px;border-radius:6px;font-size:13px;font-family:inherit;outline:none}
+input[type=date]:focus{border-color:#EC008C}
+
+/* cards */
+.pcard{background:#fff;border:1px solid #eee;border-radius:10px;overflow:hidden;margin-bottom:10px}
+.pcard-hd{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:#fafafa;border-bottom:1px solid #eee}
+.pname{font-weight:500;font-size:13px;display:flex;align-items:center;gap:5px}
+.dims{display:grid;grid-template-columns:1fr 1fr 1fr}
+@media(max-width:640px){.dims,.tdims,.cmp-grid{grid-template-columns:1fr}.dim,.tdim,.cmp-col{border-right:none;border-bottom:1px solid #eee}.dim:last-child,.tdim:last-child,.cmp-col:last-child{border-bottom:none}}
+.dim{padding:10px 14px;border-right:1px solid #eee}
+.dim:last-child{border-right:none}
+.dlabel{font-size:11px;font-weight:500;color:#EC008C;margin-bottom:5px}
+.dprev{font-size:12px;color:#888;margin-top:5px;padding-top:5px;border-top:1px solid #f0f0f0;line-height:1.4}
+.dprev-lbl{color:#bbb;font-size:11px}
+
+/* manager comment */
+.mgr-area{padding:10px 14px;border-top:1px solid #f0f0f0;background:rgba(236,0,140,.025)}
+.mgr-lbl{font-size:11px;font-weight:500;color:#EC008C;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.mgr-badge{font-size:10px;background:#FBEAF0;color:#EC008C;padding:1px 6px;border-radius:8px}
+.comment-display{font-size:13px;color:#383838;line-height:1.5;padding:6px 10px;background:#f9f9f9;border-radius:6px;border-left:2px solid #EC008C;white-space:pre-wrap}
+.comment-empty{font-size:12px;color:#bbb;font-style:italic}
+
+/* badges */
+.badge{display:inline-flex;align-items:center;font-size:11px;padding:2px 7px;border-radius:8px;font-weight:500}
+.b-ok{background:#E1F5EE;color:#0F6E56}
+.b-stall{background:#FAECE7;color:#993C1D}
+.b-new{background:#E6F1FB;color:#185FA5}
+.b-empty{background:#f5f5f5;color:#bbb}
+
+/* inputs */
+textarea{width:100%;border:1px solid #eee;background:#fff;color:#383838;padding:7px 9px;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;min-height:68px;outline:none;line-height:1.5}
+textarea:focus{border-color:#EC008C}
+input[type=text]{width:100%;border:1px solid #eee;background:#fff;color:#383838;padding:7px 10px;border-radius:6px;font-size:13px;font-family:inherit;outline:none}
+input[type=text]:focus{border-color:#EC008C}
+input[type=password]{border:1px solid #eee;background:#fff;color:#383838;padding:7px 10px;border-radius:6px;font-size:13px;font-family:inherit;outline:none;width:140px;text-align:center}
+input[type=password]:focus{border-color:#EC008C}
+
+/* buttons */
+.btn{padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.btn-p{background:#EC008C;color:#fff;border:none}.btn-p:hover{opacity:.86}.btn-p:disabled{opacity:.4;cursor:not-allowed}
+.btn-g{background:#fff;border:1px solid #ddd;color:#383838}.btn-g:hover{background:#f9f9f9}
+.btn-sm{padding:3px 9px;font-size:12px}
+.btn-lnk{background:none;border:none;color:#EC008C;font-size:12px;cursor:pointer;padding:0;font-family:inherit;text-decoration:underline}
+.btn-del{background:none;border:none;color:#bbb;font-size:11px;cursor:pointer;padding:2px 6px;border-radius:4px}
+.btn-del:hover{color:#E24B4A;background:rgba(226,75,74,.08)}
+
+/* ai box */
+.ai-box{background:#fff;border:1px solid #eee;border-radius:10px;padding:1rem;margin-bottom:1rem}
+.ai-hint{font-size:12px;color:#888;margin-top:8px;padding:6px 10px;background:#f9f9f9;border-radius:6px;border-left:2px solid #EC008C;display:none}
+
+/* team/compare */
+.member-section{margin-bottom:1.5rem}
+.mem-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.team-proj{background:#fff;border:1px solid #eee;border-radius:10px;overflow:hidden;margin-bottom:8px}
+.tp-hd{display:flex;align-items:center;justify-content:space-between;padding:7px 13px;background:#fafafa;border-bottom:1px solid #eee}
+.tdims{display:grid;grid-template-columns:1fr 1fr 1fr}
+.tdim{padding:9px 13px;border-right:1px solid #eee;font-size:13px}
+.tdim:last-child{border-right:none}
+.tdim-lbl{font-size:11px;font-weight:500;color:#EC008C;margin-bottom:3px}
+
+/* compare */
+.cmp-grid{display:grid;grid-template-columns:1fr 1fr}
+.cmp-col{padding:10px 13px;border-right:1px solid #eee}
+.cmp-col:last-child{border-right:none;background:#fff}
+.cmp-col:first-child{background:#fafafa}
+.cmp-col-lbl{font-size:11px;color:#bbb;font-weight:500;margin-bottom:6px}
+.changed{background:rgba(236,0,140,.07);border-radius:3px;padding:1px 3px}
+
+/* pin modal */
+.pin-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:200}
+.pin-box{background:#fff;border-radius:14px;padding:1.5rem;width:280px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.12)}
+.pin-box h3{font-size:15px;font-weight:500;margin-bottom:6px}
+.pin-box p{font-size:12px;color:#888;margin-bottom:1rem;line-height:1.6}
+.pin-err{color:#E24B4A;font-size:12px;margin-top:6px;min-height:16px}
+
+.spinner{display:inline-block;width:11px;height:11px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:2rem;color:#888;font-size:13px;background:#fff;border-radius:10px;border:1px solid #eee}
+.save-row{display:flex;align-items:center;gap:10px}
+.add-row{display:flex;gap:8px;margin-bottom:1rem;align-items:center}
+.sec-lbl{font-size:11px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.wk-group-lbl{font-size:13px;font-weight:500;color:#888;margin-bottom:1rem;padding-bottom:8px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;background:#fff;padding:10px 14px;border-radius:8px;margin-bottom:1rem}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- PIN modal -->
+<div class="pin-overlay" id="pin-overlay" style="display:none">
+  <div class="pin-box">
+    <div class="ava mgr" style="width:44px;height:44px;font-size:18px;margin:0 auto 12px">★</div>
+    <h3>管理者登录</h3>
+    <p>输入管理者 PIN 码进入管理模式<br><span style="font-size:11px;color:#ccc">可在 HTML 文件中修改默认 PIN</span></p>
+    <input type="password" id="pin-input" maxlength="8" placeholder="PIN 码" onkeydown="if(event.key==='Enter')checkPin()" autofocus />
+    <div class="pin-err" id="pin-err"></div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:14px">
+      <button class="btn btn-g btn-sm" onclick="closePinModal()">取消</button>
+      <button class="btn btn-p btn-sm" onclick="checkPin()">进入管理模式</button>
+    </div>
+  </div>
+</div>
+
+<!-- Login -->
+<div id="login-screen" style="display:none">
+  <div class="login-wrap">
+    <div class="ava" style="width:48px;height:48px;font-size:20px;margin-bottom:14px">📋</div>
+    <h2>团队周报追踪器</h2>
+    <p>选择你的名字录入本周内容；管理者点下方入口查看全员进展并添加评语</p>
+    <div class="sec-lbl">团队成员</div>
+    <div class="member-grid" id="member-grid"></div>
+    <div class="or-line">— 或输入名字 —</div>
+    <div class="new-row">
+      <input type="text" id="new-name" placeholder="你的名字..." onkeydown="if(event.key==='Enter')joinAs()" />
+      <button class="btn btn-p" onclick="joinAs()">加入</button>
+    </div>
+    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #eee;width:100%;max-width:420px;text-align:center">
+      <button class="mbtn mgr-btn" onclick="openPinModal()">★ 管理者入口</button>
+    </div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="main" style="display:none">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="ava" id="top-ava"></div>
+      <div>
+        <div class="tb-name" id="top-name"></div>
+        <div class="tb-sub" id="top-week"></div>
+      </div>
+    </div>
+    <button class="btn btn-g btn-sm" onclick="logout()">切换用户</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('my')" id="tab-btn-my">我的本周</button>
+    <button class="tab" onclick="switchTab('team')">团队总览</button>
+    <button class="tab" onclick="switchTab('compare')">周对比</button>
+  </div>
+
+  <!-- MY -->
+  <div id="tab-my">
+    <div class="wk-row">
+      <label>当前周：</label>
+      <input type="date" id="week-date" onchange="onDateChange(this.value)" />
+      <span id="wk-label" style="color:#EC008C;font-weight:500"></span>
+    </div>
+    <div id="my-projects"></div>
+    <div class="add-row">
+      <input type="text" id="new-proj" placeholder="添加项目名称..." style="max-width:260px" onkeydown="if(event.key==='Enter')addProj()" />
+      <button class="btn btn-g" onclick="addProj()">+ 添加项目</button>
+    </div>
+    <div class="ai-box">
+      <div class="sec-lbl" style="margin-bottom:8px">AI 快速录入</div>
+      <p style="font-size:12px;color:#888;margin-bottom:8px">直接说本周做了什么，AI 帮你归类到各项目字段 — AI 填完后你可以直接编辑修改</p>
+      <textarea id="ai-input" placeholder="例：这周 RFID 项目和 Arthur 对齐了设备方案，OTB 那边发给买手了 25 家店的表格，选品池功能跟盖文确认了需求..." style="min-height:80px"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+        <button class="btn btn-p btn-sm" id="ai-btn" onclick="runAI()">AI 解析</button>
+        <span id="ai-status" style="font-size:12px;color:#888"></span>
+      </div>
+      <div class="ai-hint" id="ai-hint">✓ AI 已填入，所有字段可直接编辑后点「保存本周」</div>
+    </div>
+    <div class="save-row">
+      <button class="btn btn-p" onclick="saveAll()">保存本周</button>
+      <span id="save-msg" style="font-size:12px;color:#888"></span>
+    </div>
+  </div>
+
+  <!-- TEAM -->
+  <div id="tab-team" style="display:none"></div>
+
+  <!-- COMPARE -->
+  <div id="tab-compare" style="display:none"></div>
+</div>
+
+</div><!-- .app -->
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG — edit these to match your team
+// ═══════════════════════════════════════════
+const MGR_PIN = '1234';
+
+const MEMBERS = ['方程','佳昂','一杭','黄姗','Siri','思敏'];
+
+const PROJ_KEYWORDS = [
+  'RFID','配补调系统','选品池','OTB','门店规划','品牌池','仓库能力建设',
+  '商品资料工作台','AI模特图','AI商品资料','供单系统','PR系统',
+  '采买全链路提效','线下店智能看板','线下店货品看板','闸机','线下店CRM',
+  '线上销售情况追踪','买手看板','中台销售库存看板','商品通2.0','摄像头项目',
+  '商品资料','线上转线下','调价系统','测算系统'
+];
+
+const ALL_PEOPLE = [
+  '方程','佳昂','一杭','黄姗','姗姗','Siri','希瑞','思敏','Emma',
+  '周彤','盖文','Gavin','尼克','Nick','Leo','立人','Arthur','Fanny',
+  'Antoine','亚杰','刘佩','佩佩','佳仪','于昕','王云','老王','Roy',
+  '程宇廷','沈杨','林昕','Remi','杨柏','亚芬','书豪','滚滚','富铵',
+  '子杰','Cici','王晴','晴姐','Kimmy','Garance','杜梦琪','Lawrence',
+  'Vivianie','小燕','Lisa','Jason','子敏'
+];
+// ═══════════════════════════════════════════
+
+const SK = 'twt-v3';
+let data = { members: [...MEMBERS], memberData: {}, comments: {} };
+let me = null, isMgr = false, curWeek = '', curWeekLabel = '';
+
+// ── storage (works in both standalone and Claude artifact) ──
+const storage = {
+  async get() {
+    if(window.storage) { try { const r=await window.storage.get(SK,true); return r?JSON.parse(r.value):null; } catch(e){} }
+    try { const v=localStorage.getItem(SK); return v?JSON.parse(v):null; } catch(e){ return null; }
+  },
+  async set(val) {
+    if(window.storage) { try { await window.storage.set(SK,JSON.stringify(val),true); return; } catch(e){} }
+    try { localStorage.setItem(SK,JSON.stringify(val)); } catch(e){}
+  }
+};
+
+async function load() {
+  const saved = await storage.get();
+  if(saved) data = saved;
+  if(!data.members) data.members=[...MEMBERS];
+  if(!data.memberData) data.memberData={};
+  if(!data.comments) data.comments={};
+  MEMBERS.forEach(m=>{ if(!data.members.includes(m)) data.members.push(m); });
+}
+async function persist() { await storage.set(data); }
+
+// ── date helpers ──
+function wkKey(d) {
+  const dt=new Date(d),mon=new Date(dt); mon.setDate(dt.getDate()-dt.getDay()+1);
+  const y=mon.getFullYear(),s=new Date(y,0,1);
+  return `${y}-W${String(Math.ceil(((mon-s)/86400000+s.getDay()+1)/7)).padStart(2,'0')}`;
+}
+function wkLabel(d) {
+  const dt=new Date(d),mon=new Date(dt); mon.setDate(dt.getDate()-dt.getDay()+1);
+  const fri=new Date(mon); fri.setDate(mon.getDate()+4);
+  const f=x=>`${x.getMonth()+1}月${x.getDate()}日`;
+  return `${f(mon)} – ${f(fri)}`;
+}
+function wkLabelFor(wk) {
+  for(const u of Object.keys(data.memberData)) { const w=data.memberData[u]?.weeks?.[wk]; if(w?._label) return w._label; }
+  return wk;
+}
+function prevWk(wk) { const [y,n]=wk.split('-W'),i=parseInt(n); return i<=1?`${parseInt(y)-1}-W52`:`${y}-W${String(i-1).padStart(2,'0')}`; }
+function allWks() {
+  const s=new Set();
+  Object.values(data.memberData).forEach(m=>Object.keys(m.weeks||{}).forEach(w=>{ if(!w.startsWith('_')) s.add(w); }));
+  return [...s].sort().reverse();
+}
+
+// ── helpers ──
+function myData() { if(!data.memberData[me]) data.memberData[me]={projects:[],weeks:{}}; return data.memberData[me]; }
+function setMyData(d) { data.memberData[me]=d; }
+function entry(user,wk,proj) { return data.memberData[user]?.weeks?.[wk]?.[proj]||null; }
+function ini(n) { return n?n[0].toUpperCase():'?'; }
+function badge(cur,prev) {
+  if(!cur||(!cur.progress&&!cur.nextWeek)) return `<span class="badge b-empty">未录入</span>`;
+  if(!prev) return `<span class="badge b-new">首次</span>`;
+  return (cur.progress||'').trim()===(prev.progress||'').trim()?`<span class="badge b-stall">⚠ 未变</span>`:`<span class="badge b-ok">↑ 更新</span>`;
+}
+function getComment(wk,user,proj) { return data.comments?.[wk]?.[user]?.[proj]||''; }
+function setComment(wk,user,proj,val) {
+  if(!data.comments[wk]) data.comments[wk]={};
+  if(!data.comments[wk][user]) data.comments[wk][user]={};
+  data.comments[wk][user][proj]=val;
+}
+
+// ── login ──
+function renderLogin() {
+  document.getElementById('member-grid').innerHTML =
+    data.members.map(m=>`<button class="mbtn" onclick="loginAs('${m}')">${m}</button>`).join('') +
+    `<button class="mbtn" onclick="document.getElementById('new-name').focus()">+ 其他</button>`;
+}
+
+function openPinModal() {
+  document.getElementById('pin-overlay').style.display='flex';
+  setTimeout(()=>document.getElementById('pin-input').focus(),50);
+}
+function closePinModal() {
+  document.getElementById('pin-overlay').style.display='none';
+  document.getElementById('pin-err').textContent='';
+  document.getElementById('pin-input').value='';
+}
+function checkPin() {
+  const v=document.getElementById('pin-input').value;
+  if(v===(data.managerPin||MGR_PIN)) { closePinModal(); doEnterMgr(); }
+  else { document.getElementById('pin-err').textContent='PIN 码不正确，请重试'; }
+}
+
+function doEnterMgr() {
+  me='管理者'; isMgr=true;
+  sessionStorage.setItem('twt-user','__mgr__');
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('main').style.display='';
+  const av=document.getElementById('top-ava'); av.textContent='★'; av.className='ava mgr';
+  document.getElementById('top-name').innerHTML='管理者 <span class="pill">管理模式</span>';
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('week-date').value=today; onDateChange(today);
+  document.getElementById('tab-btn-my').style.display='none';
+  document.getElementById('tab-my').style.display='none';
+  switchTab('team');
+}
+
+function loginAs(name) {
+  me=name; isMgr=false;
+  if(!data.members.includes(name)) data.members.push(name);
+  if(!data.memberData[name]) data.memberData[name]={projects:[],weeks:{}};
+  sessionStorage.setItem('twt-user',name);
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('main').style.display='';
+  document.getElementById('top-ava').textContent=ini(name);
+  document.getElementById('top-ava').className='ava';
+  document.getElementById('top-name').textContent=name;
+  document.getElementById('tab-btn-my').style.display='';
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('week-date').value=today; onDateChange(today);
+  switchTab('my');
+}
+
+function joinAs() { const n=document.getElementById('new-name').value.trim(); if(n) loginAs(n); }
+
+function logout() {
+  me=null; isMgr=false; sessionStorage.removeItem('twt-user');
+  document.getElementById('main').style.display='none';
+  document.getElementById('login-screen').style.display='';
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  ['team','compare'].forEach(t=>document.getElementById('tab-'+t).style.display='none');
+  document.getElementById('tab-my').style.display='';
+  renderLogin();
+}
+
+// ── my week ──
+function onDateChange(v) {
+  curWeek=wkKey(v); curWeekLabel=wkLabel(v);
+  document.getElementById('wk-label').textContent=curWeekLabel;
+  document.getElementById('top-week').textContent=curWeekLabel;
+  if(!isMgr) {
+    const md=myData(); if(!md.weeks[curWeek]) md.weeks[curWeek]={};
+    md.weeks[curWeek]._label=curWeekLabel; setMyData(md);
+    renderMyProjects();
+  }
+}
+
+function renderMyProjects() {
+  const md=myData(), projs=md.projects||[], pw=prevWk(curWeek);
+  const cont=document.getElementById('my-projects');
+  if(!projs.length) { cont.innerHTML=`<div class="empty" style="margin-bottom:1rem">添加你负责的项目，或使用 AI 录入</div>`; return; }
+  cont.innerHTML=projs.map((p,i)=>{
+    const cur=md.weeks[curWeek]?.[p]||{}, prev=md.weeks[pw]?.[p]||null;
+    const b=badge(Object.keys(cur).length?cur:null,prev);
+    return `<div class="pcard">
+      <div class="pcard-hd">
+        <div class="pname"><span style="color:#EC008C">▌</span>${p}</div>
+        <div style="display:flex;align-items:center;gap:7px">${b}
+          <button class="btn-del" onclick="removeProj(${i})">移除</button>
+        </div>
+      </div>
+      <div class="dims">
+        <div class="dim"><div class="dlabel">本周进度</div>
+          <textarea placeholder="做了什么，达到什么结果…" oninput="setField('${p}','progress',this.value)">${cur.progress||''}</textarea>
+          ${prev?.progress?`<div class="dprev"><span class="dprev-lbl">上周：</span>${prev.progress}</div>`:''}
+        </div>
+        <div class="dim"><div class="dlabel">下周计划</div>
+          <textarea placeholder="具体动作 + 预期产出…" oninput="setField('${p}','nextWeek',this.value)">${cur.nextWeek||''}</textarea>
+          ${prev?.nextWeek?`<div class="dprev"><span class="dprev-lbl">上周计划：</span>${prev.nextWeek}</div>`:''}
+        </div>
+        <div class="dim"><div class="dlabel">卡点 / 需协助</div>
+          <textarea placeholder="阻塞原因 + 需谁协助…" oninput="setField('${p}','blocker',this.value)">${cur.blocker||''}</textarea>
+          ${prev?.blocker&&prev.blocker!=='暂无'?`<div class="dprev"><span class="dprev-lbl">上周卡点：</span>${prev.blocker}</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setField(proj,field,val) {
+  const md=myData(); if(!md.weeks[curWeek]) md.weeks[curWeek]={_label:curWeekLabel};
+  if(!md.weeks[curWeek][proj]) md.weeks[curWeek][proj]={};
+  md.weeks[curWeek][proj][field]=val; setMyData(md);
+}
+function addProj() {
+  const inp=document.getElementById('new-proj'),name=inp.value.trim(); if(!name) return;
+  const md=myData(); if(!md.projects.includes(name)) md.projects.push(name); setMyData(md); inp.value=''; renderMyProjects();
+}
+function removeProj(i) { const md=myData(); md.projects.splice(i,1); setMyData(md); renderMyProjects(); }
+async function saveAll() {
+  await persist();
+  document.getElementById('save-msg').textContent=`✓ 已保存 ${new Date().toLocaleTimeString('zh',{hour:'2-digit',minute:'2-digit'})}`;
+  setTimeout(()=>document.getElementById('save-msg').textContent='',3000);
+}
+
+// ── AI ──
+async function runAI() {
+  const text=document.getElementById('ai-input').value.trim(); if(!text) return;
+  const btn=document.getElementById('ai-btn'); btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
+  document.getElementById('ai-status').textContent='解析中…';
+  const md=myData();
+  try {
+    const res=await fetch('https://vipglobal-weekly.yye2013.workers.dev',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      messages:[{role:'user',content:`你是一个帮助零售策略团队整理周报的助手。你的任务是把一段口语化的工作描述，整理成结构化的字段。
+
+你需要完成四件事：
+
+---
+
+## 第一件事：区分「项目」和「琐事」
+
+判断标准：
+- 是「项目」：有持续推进过程、涉及多方协作、有明确目标或产出（品牌合作洽谈、系统开发、数据分析专项、KPI制定等）
+- 是「琐事」：一次性、单向、无需后续跟进的事，包括但不限于：
+  - 开了个例会、发了个文件、帮人解答问题
+  - 个人日程安排（培训、出差、请假、某天不在办公室）
+  - 协助其他同事的零散支持工作（"配合XX做了一些调整"但自己不是主负责人）
+  - 临时通知类信息（"下周三不在"、"下周要去培训"）
+
+同一个项目的不同事项合并成一条，不要拆散。
+
+---
+
+## 第二件事：提取本周做了什么
+
+要求：
+- 只写结论和产出，删掉过程描述
+- 结论前置，先说结果再说背景
+- 字数要求：每个字段至少2-3句，充分描述实际情况，宁可多写不要省略重要信息
+- 能量化的必须量化（X家店、X个方案、第X版、X%）
+- 涉及多方协作时，说清楚各方的角色和状态
+- 语言书面化：
+  - "聊了一下" → "完成对齐，达成[具体结论]"
+  - "发出去了" → "完成[X]并提交至[对象]"
+  - "在推" → 说清楚推到哪一步了、当前状态是什么
+  - "差不多好了" → "基本完成，待[具体事项]确认"
+  - "验收了" → "完成验收，当前状态：[谁]正在[做什么]"
+- 如果进度描述极其含糊（"配合做了一些调整"、"稍微看了一下"、"去做了一些事情"），直接在 progress 里写"[内容待补充]"，不要编造具体内容
+- 如果描述清晰，尽量还原最可能的事实，不要编造
+
+---
+
+## 第三件事：提取下周要做什么
+
+要求：
+- 写具体动作，不写方向（"推进合作"太虚，要写"完成方案初稿并提交给对方"）
+- 如果提到了下一步但时间未定，也要写进来
+- 如果有多个下周动作，全部列出，用分号分隔
+- 如果涉及等待他人，写清楚“待[谁][做什么]后，再[做什么]”
+- 如果没有提到下周计划，写空字符串，不要猜
+
+---
+
+## 第四件事：识别卡点和需要帮助的地方
+
+像一个有经验的管理者一样，从字里行间读出真正的困难。
+
+明显卡点信号：
+- "在等…的回复/审批/确认" → 外部依赖，等待中
+- "对方一直没…" → 被动等待，可能需要升级跟进
+- "推不动" "没有推进" "还没开始" → 执行受阻
+- "不知道怎么…" "不确定…" → 缺乏方向或资源
+- "存在…问题" "可能…问题" → 已预见风险
+
+隐性痛苦信号（主动识别）：
+- 同一个问题被反复提到 → 可能一直没解决
+- 描述中"但是"、"不过"、"可是"后面跟着问题 → 有阻力
+- 用了很多"应该"、"可能"、"希望" → 不确定，缺乏信心
+- 某件事花了很长时间但结果模糊 → 可能卡住了
+- "[某人/某方]正在协商/协调中" → 依赖外部，结果未定
+- "如果OK的话" "如果没问题的话" → 有不确定的前提条件
+
+输出要求：
+- 有卡点：具体说明"因为[什么原因]，导致[什么影响]，需要[谁]在[时间]前[做什么]"
+- 没有卡点：写"暂无"
+- 不要把正常推进中的工作状态写成卡点
+
+---
+
+## 团队背景
+
+公司：唯品会线下事业部策略中台
+
+团队成员（提到这些名字说明是内部工作）：
+方程、佳昂、一杭、黄姗/姗姗、Siri/希瑞、思敏/Emma
+
+外部合作方（提到这些名字说明涉及跨部门或外部协作）：
+周彤、盖文/Gavin、尼克/Nick、Leo、立人、Arthur、Fanny、Antoine、亚杰、刘佩/佩佩、佳仪、于昕、王云/老王/Roy、程宇廷、沈杨、林昕、Remi、杨柏、亚芬、书豪、滚滚、富铵、子杰、Cici、王晴/晴姐、Kimmy、Garance/杜梦琪、Lawrence、Vivianie、小燕、Lisa、Jason、子敏
+
+常见项目关键词（提到这些词说明在描述某个具体项目）：
+RFID、配补调系统、选品池、OTB、门店规划、品牌池、仓库能力建设、商品资料工作台、AI模特图、AI商品资料、供单系统、PR系统、采买全链路提效、线下店智能看板、线下店货品看板、闸机、线下店CRM、线上销售情况追踪、买手看板、中台销售库存看板、商品通2.0、摄像头项目、商品资料、线上转线下、调价系统、测算系统
+
+---
+
+## 已有项目列表（优先匹配这些名称，不要另起新名）
+${md.projects.length?md.projects.join('、'):'（暂无）'}
+
+---
+
+## 用户输入
+"""
+${text}
+"""
+
+---
+
+严格输出JSON，仅JSON，不要有任何额外文字、解释或markdown代码块：
+{"entries":[{"project":"项目名（优先匹配已有项目，其次匹配关键词，新项目用简短准确的名称）","progress":"2-4句：结论前置+当前状态+涉及方进展，保留所有数字和细节，含糊内容写[内容待补充]","nextWeek":"2-3句：列出所有具体动作和预期产出，有依赖关系的说清楚先后顺序，未提及写空字符串","blocker":"2-3句：说清楚原因+影响+需要谁在何时做什么，无则写暂无"}],"other":["琐事一句话，包括个人日程和协助性工作"]}`}]})});
+    const d=await res.json();
+    const parsed=JSON.parse(d.content[0].text.replace(/```json|```/g,'').trim());
+    parsed.entries.forEach(e=>{
+      if(!md.projects.includes(e.project)) md.projects.push(e.project);
+      if(!md.weeks[curWeek]) md.weeks[curWeek]={_label:curWeekLabel};
+      md.weeks[curWeek][e.project]={progress:e.progress,nextWeek:e.nextWeek,blocker:e.blocker};
+    });
+    // Handle other/琐事 items — merge into a special 「其他事项」project card
+    if(parsed.other && parsed.other.length > 0) {
+      const otherProj = '其他事项';
+      if(!md.projects.includes(otherProj)) md.projects.push(otherProj);
+      if(!md.weeks[curWeek]) md.weeks[curWeek]={_label:curWeekLabel};
+      const existing = md.weeks[curWeek][otherProj];
+      const existingProgress = existing?.progress || '';
+      const newItems = parsed.other.join('；');
+      md.weeks[curWeek][otherProj]={
+        progress: existingProgress ? existingProgress + '；' + newItems : newItems,
+        nextWeek: existing?.nextWeek || '',
+        blocker: existing?.blocker || '暂无'
+      };
+    }
+    setMyData(md);
+    const otherCount = (parsed.other||[]).length;
+    document.getElementById('ai-status').textContent=`✓ 识别 ${parsed.entries.length} 个项目${otherCount?'、'+otherCount+'条其他事项':''}，可直接编辑字段`;
+    document.getElementById('ai-hint').style.display='block';
+    document.getElementById('ai-input').value='';
+    renderMyProjects();
+  } catch(e) { document.getElementById('ai-status').textContent='失败，请重试'; }
+  btn.innerHTML='AI 解析'; btn.disabled=false;
+}
+
+// ── team view ──
+function renderTeam() {
+  const wks=allWks(), cont=document.getElementById('tab-team');
+  if(!wks.length){ cont.innerHTML=`<div class="empty">暂无数据，请团队成员先录入</div>`; return; }
+  const latest=wks[0], pw=prevWk(latest), ll=wkLabelFor(latest);
+  let html=`<div class="wk-group-lbl"><span>${ll} · 最新一周</span><span style="font-size:12px">${data.members.length} 位成员</span></div>`;
+  data.members.forEach(member=>{
+    const md=data.memberData[member]; if(!md) return;
+    const projs=md.projects||[];
+    html+=`<div class="member-section"><div class="mem-hd"><div class="ava">${ini(member)}</div><span style="font-weight:500">${member}</span>${!projs.some(p=>md.weeks[latest]?.[p])?'<span class="badge b-empty" style="font-size:11px;margin-left:4px">未录入</span>':''}</div>`;
+    if(!projs.length){ html+=`<div style="font-size:13px;color:#888;padding:6px 0;margin-bottom:1rem">暂无项目</div></div>`; return; }
+    projs.forEach(p=>{
+      const cur=entry(member,latest,p), prev=entry(member,pw,p), b=badge(cur,prev);
+      const cmt=getComment(latest,member,p);
+      html+=`<div class="team-proj">
+        <div class="tp-hd">
+          <span style="font-size:13px;font-weight:500"><span style="color:#EC008C">▌</span> ${p}</span>
+          <div style="display:flex;align-items:center;gap:7px">${b}
+            ${isMgr?`<button class="btn btn-g btn-sm" id="edit-btn-${member}-${p}" onclick="toggleEdit('${member}','${p}','${latest}',this)">编辑</button>`:''}
+          </div>
+        </div>
+        ${cur?`<div class="tdims">
+          <div class="tdim"><div class="tdim-lbl">本周进度</div>
+            <div id="tv-progress-${member}-${p}" style="line-height:1.5">${cur.progress||'—'}</div>
+            ${prev?.progress?`<div style="font-size:12px;color:#888;margin-top:4px;padding-top:4px;border-top:1px solid #f0f0f0"><span style="font-size:11px;color:#bbb">上周：</span>${prev.progress}</div>`:''}
+          </div>
+          <div class="tdim"><div class="tdim-lbl">下周计划</div><div id="tv-nextWeek-${member}-${p}">${cur.nextWeek||'—'}</div></div>
+          <div class="tdim"><div class="tdim-lbl">卡点 / 需协助</div><div id="tv-blocker-${member}-${p}" style="${cur.blocker&&cur.blocker!=='暂无'?'color:#993C1D':''}">${cur.blocker||'—'}</div></div>
+        </div>`:`<div style="padding:10px 13px;font-size:13px;color:#888">本周未录入</div>`}
+        <div class="mgr-area">
+          <div class="mgr-lbl">管理者评语 <span class="mgr-badge">仅管理者可编辑</span></div>
+          ${isMgr
+            ?`<textarea id="cmt-${member}-${p}" style="min-height:52px" placeholder="添加评语、跟进指示或优先级调整…" oninput="onComment('${latest}','${member}','${p}',this.value)">${cmt}</textarea>`
+            :cmt?`<div class="comment-display">${cmt}</div>`:`<div class="comment-empty">暂无评语</div>`
+          }
+        </div>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  cont.innerHTML=html;
+}
+
+function toggleEdit(member,proj,wk,btn) {
+  const keys=['progress','nextWeek','blocker'];
+  const isEditing=btn.textContent==='保存';
+  const cur=entry(member,wk,proj)||{};
+  if(!isEditing) {
+    btn.textContent='保存'; btn.style.cssText='background:#EC008C;color:#fff;border:none';
+    keys.forEach(k=>{
+      const el=document.getElementById(`tv-${k}-${member}-${proj}`); if(!el) return;
+      el.innerHTML=`<textarea style="min-height:60px;margin:0" oninput="editField('${member}','${proj}','${wk}','${k}',this.value)">${cur[k]||''}</textarea>`;
+    });
+  } else {
+    btn.textContent='编辑'; btn.style.cssText='';
+    persist().then(()=>{ renderTeam(); });
+  }
+}
+
+function editField(member,proj,wk,field,val) {
+  if(!data.memberData[member]) data.memberData[member]={projects:[],weeks:{}};
+  if(!data.memberData[member].weeks[wk]) data.memberData[member].weeks[wk]={};
+  if(!data.memberData[member].weeks[wk][proj]) data.memberData[member].weeks[wk][proj]={};
+  data.memberData[member].weeks[wk][proj][field]=val;
+}
+
+async function onComment(wk,member,proj,val) {
+  setComment(wk,member,proj,val);
+  await persist();
+}
+
+// ── compare ──
+function renderCompare() {
+  const wks=allWks(), cont=document.getElementById('tab-compare');
+  if(!wks.length){ cont.innerHTML=`<div class="empty">暂无数据</div>`; return; }
+  const latest=wks[0], pw=prevWk(latest), ll=wkLabelFor(latest), hasPrev=wks.includes(pw);
+  let html=`<div style="display:flex;gap:8px;align-items:center;margin-bottom:1rem;font-size:13px;background:#fff;padding:10px 14px;border-radius:8px;border:1px solid #eee">
+    <span style="color:#888">对比：</span>
+    <span style="color:#888">${hasPrev?wkLabelFor(pw):'—（无上周数据）'}</span>
+    <span style="color:#ccc">→</span>
+    <span style="font-weight:500;color:#EC008C">${ll}（本周）</span>
+  </div>`;
+  data.members.forEach(member=>{
+    const md=data.memberData[member]; if(!md?.projects?.length) return;
+    html+=`<div style="margin-bottom:1.5rem"><div class="mem-hd"><div class="ava">${ini(member)}</div><span style="font-weight:500">${member}</span></div>`;
+    md.projects.forEach(p=>{
+      const cur=entry(member,latest,p), prev=hasPrev?entry(member,pw,p):null;
+      const changed=cur&&prev&&(cur.progress||'').trim()!==(prev.progress||'').trim();
+      const b=!cur?`<span class="badge b-empty">未录入</span>`:!prev?`<span class="badge b-new">首次记录</span>`:changed?`<span class="badge b-ok">↑ 有更新</span>`:`<span class="badge b-stall">⚠ 进展未变</span>`;
+      const cmt=getComment(latest,member,p);
+      html+=`<div class="team-proj" style="margin-bottom:8px">
+        <div class="tp-hd"><span style="font-size:13px;font-weight:500"><span style="color:#EC008C">▌</span> ${p}</span>${b}</div>
+        <div class="cmp-grid">
+          <div class="cmp-col"><div class="cmp-col-lbl">${hasPrev?wkLabelFor(pw):'上周'}</div>
+            ${prev?`<div style="margin-bottom:7px"><div style="font-size:11px;color:#EC008C;font-weight:500;margin-bottom:3px">本周进度</div><div style="font-size:13px">${prev.progress||'—'}</div></div>
+              <div style="margin-bottom:7px"><div style="font-size:11px;color:#EC008C;font-weight:500;margin-bottom:3px">下周计划</div><div style="font-size:13px">${prev.nextWeek||'—'}</div></div>
+              <div><div style="font-size:11px;color:#EC008C;font-weight:500;margin-bottom:3px">卡点</div><div style="font-size:13px">${prev.blocker||'—'}</div></div>`
+            :`<div style="font-size:13px;color:#bbb;font-style:italic">无记录</div>`}
+          </div>
+          <div class="cmp-col"><div class="cmp-col-lbl" style="color:#EC008C">${ll}（本周）</div>
+            ${cur?`<div style="margin-bottom:7px"><div style="font-size:11px;color:#EC008C;font-weight:500;margin-bottom:3px">本周进度</div><div style="font-size:13px" class="${changed?'changed':''}">${cur.progress||'—'}</div></div>
+              <div style="margin-bottom:7px"><div style="font-size:11px;color:#EC008C;font-weight:500;margin-bottom:3px">下周计划</div><div style="font-size:13px">${cur.nextWeek||'—'}</div></div>
+              <div><div style="font-size:11px;color:#EC008C;font-weight:500;margin-bottom:3px">卡点</div><div style="font-size:13px;${cur.blocker&&cur.blocker!=='暂无'?'color:#993C1D':''}">${cur.blocker||'—'}</div></div>`
+            :`<div style="font-size:13px;color:#bbb;font-style:italic">未录入</div>`}
+          </div>
+        </div>
+        ${cmt?`<div class="mgr-area"><div class="mgr-lbl">管理者评语</div><div class="comment-display">${cmt}</div></div>`:''}
+      </div>`;
+    });
+    html+='</div>';
+  });
+  cont.innerHTML=html;
+}
+
+function switchTab(tab) {
+  const tabs=['my','team','compare'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===tab));
+  tabs.forEach(t=>document.getElementById('tab-'+t).style.display=t===tab?'':'none');
+  if(tab==='team') renderTeam();
+  if(tab==='compare') renderCompare();
+}
+
+// ── init ──
+async function init() {
+  await load();
+  const hash = window.location.hash;
+  const saved = sessionStorage.getItem('twt-user');
+
+  if(hash==='#admin') {
+    // Admin link: auto-open PIN modal
+    document.getElementById('login-screen').style.display='';
+    renderLogin();
+    openPinModal();
+  } else if(saved==='__mgr__') {
+    doEnterMgr();
+  } else if(saved && data.members.includes(saved)) {
+    loginAs(saved);
+  } else {
+    document.getElementById('login-screen').style.display='';
+    renderLogin();
+  }
+
+  document.getElementById('new-name').addEventListener('keydown',e=>{ if(e.key==='Enter') joinAs(); });
+}
+
+init();
+</script>
+</body>
+</html>
