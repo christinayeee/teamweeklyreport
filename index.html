@@ -439,7 +439,7 @@ async function runAI() {
   const md=myData();
   try {
     const res=await fetch('https://vipglobal-weekly.yye2013.workers.dev',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      messages:[{role:'user',content:`你是唯品会线下事业部策略中台的周报整理助手。把口语描述整理成结构化周报字段，每个字段要写2-3句，充分描述实际情况。
+      messages:[{role:'user',content:`你是唯品会全球事业部策略中台的周报整理助手。把口语描述整理成结构化周报字段，每个字段要写2-3句，充分描述实际情况。
 
 ## 区分项目和琐事
 
@@ -480,7 +480,7 @@ async function runAI() {
 明显信号：
 - 在等审批/回复/确认 → 外部依赖
 - 推不动、没有推进、还没开始 → 执行受阻
-- "需要你去跟XX说"、"需要老板帮忙"、"可能需要你" → 直接请求管理者出面协调（这是最重要的信号，必须捕捉）
+- "需要你去"、"需要xx帮忙"、"可能需要你" → 直接请求管理者出面协调（这是最重要的信号，必须捕捉今卡点/需协助）
 - "需要XX在XX之前确认/决定" → 有明确依赖和时限
 
 隐性信号：
@@ -494,14 +494,10 @@ async function runAI() {
 
 ## 团队信息
 内部成员（这些名字出现说明是内部协作）：
-方程、佳昂、一杭、黄姗/姗姗/黄山（语音识别误写）、Siri/希瑞、思敏/Emma
+方程、佳昂、一杭、黄姗/姗姗、Siri/希瑞、思敏/Emma
 
 内部团队简称（这些词指代团队，不是个人）：
 - 产技/产品技术/产品侧 = 产品技术团队
-- 产季/产品季 = 产品季度团队（注意：语音输入中"产技"可能被识别为"产季"）
-- 商品侧/商品团队 = 商品中台团队
-- 运营侧/运营团队 = 线下运营团队
-- 买手团队/买手侧 = 采购买手团队
 
 外部合作方：周彤、盖文/Gavin、尼克/Nick、Leo、立人、Arthur、Fanny、Antoine、亚杰、刘佩/佩佩、佳仪、于昕、王云/老王/Roy、程宇廷、沈杨、林昕、Remi、杨柏、亚芬、书豪、滚滚、富铵、子杰、Cici、王晴/晴姐、Kimmy、Garance/杜梦琪、Lawrence、Vivianie、小燕、Lisa、Jason、子敏
 项目关键词及常见别名（括号内是用户可能说的口语版本）：
